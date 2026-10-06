@@ -29,6 +29,7 @@ type Modal =
   | "confirmation"
   | "no-confirm"
   | "offline"
+  | "where-is-truck"
   | "driver-login"
   | "driver-trip"
   | "driver-summary"
@@ -118,6 +119,8 @@ const VOICE: Record<string, string> = {
     "No podemos calcular la hora. Último dato conocido: hoy a las 6:30 de la mañana el camión estaba a seis calles. En tu calle, tres vecinos ya confirmaron recibo hoy. Botón: Avisar a mi familia. No mostramos una hora estimada cuando no podemos verificarla.",
   notification:
     "El camión llega en aproximadamente 10 minutos. Prepara tus baldes en la puerta. El dato viene del GPS del camión y puede variar según el tráfico y las paradas. Toca Abrir para confirmar.",
+  "where-is-truck":
+    "Ubicación aproximada del camión. Última actualización 9:41 de la mañana, hace un minuto. Está a cuatro calles. Ojo: el GPS en esta zona puede tener un error de cincuenta metros, por eso se muestra como un círculo y no como un punto exacto. No necesitas venir a la puerta: la app te avisa cuando esté a diez minutos.",
   confirmation:
     "¿Llegó tu agua? Toca una sola vez para registrar la entrega. Botón verde: Sí, la recibí. Botón rojo: No llegó. Botón: Cancelar.",
   "no-confirm":
@@ -1034,6 +1037,50 @@ function HomeScreen({
             <polyline points="12 6 12 12 16 14" />
           </svg>
           Ver historial
+        </button>
+
+        {/* Acción secundaria y optativa. Va deliberadamente discreta: el dato
+            central de esta pantalla sigue siendo el ETA (H8). */}
+        <button
+          onClick={() => onModal("where-is-truck")}
+          aria-label="Ver dónde está el camión. Muestra una ubicación aproximada, no exacta."
+          style={{
+            width: "100%",
+            marginTop: 10,
+            minHeight: 48,
+            borderRadius: 12,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            background: "none",
+            border: "none",
+            color: t.textSub,
+            fontSize: fs(13),
+            fontWeight: 700,
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+            cursor: "pointer",
+            outline: "none",
+          }}
+          {...focusRing(highContrast)}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 21s-7-5.5-7-11a7 7 0 1114 0c0 5.5-7 11-7 11z" />
+            <circle cx="12" cy="10" r="2.5" />
+          </svg>
+          Ver dónde está
         </button>
 
         {/* Estado sin señal: se declara, no se disimula */}
@@ -2898,6 +2945,259 @@ function OfflineModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+/**
+ * Ubicación aproximada del camión.
+ *
+ * No es navegación ni un mapa en vivo. Es un esquema estático, y lo importante
+ * es que dibuja un CÍRCULO de incertidumbre en vez de un punto: en un
+ * asentamiento periurbano el GPS se desvía decenas de metros, así que un punto
+ * exacto afirmaría una certeza que el dato no tiene.
+ *
+ * Además no muestra una ruta a "seguir": la app avisa cuando el camión está a
+ * 10 minutos. Darle a Rosa una ruta la tienta a salir a la puerta antes de
+ * tiempo, que es justo el problema que la app resuelve.
+ */
+function WhereIsTruckModal({ onClose }: { onClose: () => void }) {
+  const t = useTokens()
+  const fs = useFontSize()
+  const { highContrast, voiceEnabled, speak } = useA11y()
+
+  useEffect(() => {
+    if (voiceEnabled) speak(VOICE["where-is-truck"])
+  }, [voiceEnabled])
+
+  const TRUCK = { x: 108, y: 108 }
+  const HOME = { x: 246, y: 318 }
+  const streets = [58, 130, 208, 318]
+  const avenues = [72, 176, 246]
+
+  return (
+    <main
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ubicación aproximada del camión cisterna"
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+      }}
+    >
+      <StatusBar />
+      <div
+        style={{
+          padding: "10px 20px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexShrink: 0,
+        }}
+      >
+        <BackButton onClick={onClose} label="Volver al inicio" />
+        <p
+          role="heading"
+          aria-level={1}
+          style={{ fontSize: fs(19), fontWeight: 900, color: t.text }}
+        >
+          Dónde está el camión
+        </p>
+      </div>
+
+      <div style={{ flex: 1, padding: "0 16px", minHeight: 0 }}>
+        <figure
+          style={{
+            margin: 0,
+            height: "100%",
+            minHeight: 0,
+            borderRadius: 18,
+            overflow: "hidden",
+            background: highContrast ? "#000" : "#E8F0F6",
+            border: `1.5px solid ${t.border}`,
+          }}
+        >
+          <svg
+            viewBox="0 0 320 400"
+            width="100%"
+            height="100%"
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label={`Mapa esquemático de la zona. El camión está a cuatro calles, en una posición aproximada con un margen de error de cincuenta metros. Tu casa está marcada en la esquina inferior derecha.`}
+          >
+            {/* Calles del asentamiento */}
+            <g
+              stroke={highContrast ? "#FFFFFF" : "#D3E1EB"}
+              strokeWidth="8"
+              strokeLinecap="round"
+            >
+              {streets.map(y => (
+                <line key={`s${y}`} x1="16" y1={y} x2="304" y2={y} />
+              ))}
+              {avenues.map(x => (
+                <line key={`a${x}`} x1={x} y1="20" x2={x} y2="384" />
+              ))}
+            </g>
+
+            {/* Tramo restante, punteado: referencia, no guía */}
+            <polyline
+              points={`${TRUCK.x},${TRUCK.y} ${TRUCK.x},208 ${HOME.x},208 ${HOME.x},${HOME.y}`}
+              fill="none"
+              stroke={highContrast ? "#FFD700" : "#F2A73B"}
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeDasharray="2 8"
+              opacity="0.85"
+            />
+
+            {/* Cámara de incertidumbre: el dato central de honestidad */}
+            <circle
+              cx={TRUCK.x}
+              cy={TRUCK.y}
+              r="34"
+              fill={highContrast ? "#FFD700" : "#F2A73B"}
+              opacity="0.16"
+            />
+            <circle
+              cx={TRUCK.x}
+              cy={TRUCK.y}
+              r="34"
+              fill="none"
+              stroke={highContrast ? "#FFD700" : "#D4891A"}
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+            />
+
+            {/* El camión */}
+            <g transform={`translate(${TRUCK.x - 14} ${TRUCK.y - 12})`}>
+              <svg
+                width="28"
+                height="24"
+                viewBox="0 0 28 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="1"
+                  y="4"
+                  width="15"
+                  height="13"
+                  rx="2"
+                  fill={highContrast ? "#000" : "#1C7293"}
+                />
+                <path
+                  d="M16 8h5l5 5v4h-10V8z"
+                  fill={highContrast ? "#000" : "#1C7293"}
+                />
+                <circle cx="7" cy="19" r="3" fill={highContrast ? "#FFD700" : "#065A82"} />
+                <circle cx="21" cy="19" r="3" fill={highContrast ? "#FFD700" : "#065A82"} />
+              </svg>
+            </g>
+
+            {/* Tu casa */}
+            <g transform={`translate(${HOME.x - 11} ${HOME.y - 11})`}>
+              <svg width="22" height="22" viewBox="0 0 28 36" fill="none" aria-hidden="true">
+                <path
+                  d="M14 2C14 2 2 16 2 22A12 12 0 0 0 26 22C26 16 14 2 14 2Z"
+                  fill={highContrast ? "#FFD700" : "#065A82"}
+                />
+              </svg>
+            </g>
+            <circle
+              cx={HOME.x}
+              cy={HOME.y}
+              r="20"
+              fill="none"
+              stroke={highContrast ? "#FFD700" : "#065A82"}
+              strokeWidth="1.5"
+              opacity="0.45"
+            />
+          </svg>
+        </figure>
+      </div>
+
+      <div style={{ padding: "14px 16px max(20px, env(safe-area-inset-bottom))", flexShrink: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 14,
+            alignItems: "center",
+            padding: 14,
+            borderRadius: 14,
+            background: t.bgCard,
+            border: `1.5px dashed ${t.border}`,
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              border: "1.5px dashed #D4891A",
+              background: "rgba(242,167,59,0.16)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg width="22" height="20" viewBox="0 0 28 24" fill="none">
+              <rect x="1" y="4" width="15" height="13" rx="2" fill="#1C7293" />
+              <path d="M16 8h5l5 5v4h-10V8z" fill="#1C7293" />
+              <circle cx="7" cy="19" r="3" fill="#065A82" />
+              <circle cx="21" cy="19" r="3" fill="#065A82" />
+            </svg>
+          </span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: fs(15), fontWeight: 900, color: t.text }}>
+              A 4 calles de tu casa
+            </p>
+            <p
+              style={{
+                fontSize: fs(12),
+                fontWeight: 600,
+                color: t.textSub,
+                marginTop: 3,
+              }}
+            >
+              Última actualización 9:41 am · hace 1 min
+            </p>
+          </div>
+        </div>
+
+        <p
+          role="note"
+          style={{
+            fontSize: fs(12),
+            fontWeight: 600,
+            color: t.textSub,
+            textAlign: "center",
+            lineHeight: 1.5,
+            marginTop: 12,
+          }}
+        >
+          El círculo es el margen de error del GPS aquí (±50 m). Por eso no te
+          mostramos un punto exacto.
+        </p>
+
+        <p
+          style={{
+            fontSize: fs(13),
+            fontWeight: 700,
+            color: t.text,
+            textAlign: "center",
+            lineHeight: 1.4,
+            marginTop: 10,
+          }}
+        >
+          No vengas a la puerta todavía.
+          <br />
+          Te avisamos cuando esté a 10 min.
+        </p>
+      </div>
+    </main>
+  )
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // CHOFER
 // ════════════════════════════════════════════════════════════════════════════
@@ -3923,6 +4223,9 @@ export default function App() {
             )}
             {modal === "no-confirm" && <NoConfirmModal onClose={closeModal} />}
             {modal === "offline" && <OfflineModal onClose={closeModal} />}
+            {modal === "where-is-truck" && (
+              <WhereIsTruckModal onClose={closeModal} />
+            )}
             {modal === "driver-login" && (
               <DriverLoginModal
                 onClose={changeRole}
