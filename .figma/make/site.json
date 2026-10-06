@@ -1,0 +1,10 @@
+{
+  "description": "Toyaku helps Peruvian households without public water access track cistern truck arrivals and confirm water delivery, ensuring timely access to water.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
