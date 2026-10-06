@@ -126,7 +126,7 @@ const VOICE: Record<string, string> = {
   "no-confirm":
     "¿Confirmas que no llegó el camión? Se enviará un reporte a la JASS. Esto no puede deshacerse. Botón: Sí, confirmar reporte. Botón: Volver.",
   history:
-    "Historial de entregas. Tres entregas confirmadas, dos no llegaron. Lista de entregas pasadas. Al final, comprobante del pago del 25 de agosto, descargable en PDF y enviable por WhatsApp.",
+    "Historial de entregas. Tres entregas confirmadas, dos no llegaron. Cada registro dice el día, la hora y quién confirmó que recibió el agua.",
   help:
     "Ayuda. Botón principal: Llamar a la JASS, Juntas Administradoras de Servicios de Saneamiento. Botón secundario: Reportar incidencia. Explica de dónde sale la hora estimada.",
   settings:
@@ -1347,105 +1347,6 @@ function HistoryScreen({ onNav }: { onNav: (k: string) => void }) {
           </li>
         ))}
 
-        {/* La evidencia: lo que sirve para reclamar */}
-        <section
-          aria-label="Comprobante de pago"
-          style={{
-            marginTop: 4,
-            borderRadius: 16,
-            padding: "14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            background: t.successBg,
-            border: `1.5px solid ${t.success}`,
-          }}
-        >
-          <div
-            aria-hidden="true"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: "rgba(46,125,50,0.15)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={t.success}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <polyline points="9 15 11 17 15 13" />
-            </svg>
-          </div>
-          <div style={{ flex: 1 }}>
-            <p
-              style={{
-                fontSize: fs(13),
-                fontWeight: 800,
-                color: t.text,
-                lineHeight: 1.3,
-              }}
-            >
-              Comprobante del pago del 25 de agosto
-            </p>
-            <p
-              style={{
-                fontSize: fs(11),
-                fontWeight: 600,
-                color: t.textSub,
-                marginTop: 2,
-              }}
-            >
-              PDF o por WhatsApp
-            </p>
-          </div>
-          <button
-            aria-label="Enviar comprobante del 25 de agosto por WhatsApp"
-            style={{
-              minWidth: 46,
-              minHeight: 46,
-              borderRadius: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: t.bgCard,
-              border: `2px solid ${t.success}`,
-              color: t.success,
-              cursor: "pointer",
-              outline: "none",
-              flexShrink: 0,
-            }}
-            {...focusRing(highContrast)}
-          >
-            <svg
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
-        </section>
       </ul>
 
       <BottomNav items={VECINA_NAV} current="history" onChange={onNav} />
@@ -2521,9 +2422,7 @@ function ConfirmationModal({
             lineHeight: 1.4,
           }}
         >
-          Registra hora y día de la entrega
-          <br />
-          para tu comprobante.
+          Queda registrado el día y la hora de la entrega.
         </p>
       </div>
     </main>
