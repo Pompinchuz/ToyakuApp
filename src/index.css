@@ -19,3 +19,12 @@ body,
 #root {
   height: 100%;
 }
+
+/* El hosting inyecta su propio badge fijo en la esquina inferior derecha. Como
+   la barra inferior de la app ocupa esa misma zona, el badge tapa dos pestañas
+   de navegación y además estorba a Rosa, que usa la app con una sola mano y
+   aprieta el borde inferior. Se oculta a proposito. */
+.netlify-badge,
+#netlify-badge {
+  display: none !important;
+}
